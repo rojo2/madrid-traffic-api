@@ -45,8 +45,6 @@ app.get("/", (req, res) => {
   res.json({ version: pckg.version });
 });
 
-// TODO: Esto molaría más si retornase los objetos en función de la
-// posición.
 app.get("/measure-point", (req, res) => {
   const MeasurePoint = mongoose.model("measurePoint");
   MeasurePoint
@@ -80,7 +78,13 @@ app.get("/measure-point-location", (req,res) => {
     console.log(coordinates);
     const query = {
       location: {
-        $near: { $geometry: { type: "Point", coordinates: coordinates }, $maxDistance: asFloat(req.query.maxDistance,100) }
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: coordinates
+          },
+          $maxDistance: asFloat(req.query.maxDistance,100)
+        }
       }
     };
     console.log(query);
@@ -102,6 +106,18 @@ app.get("/measure-point-location", (req,res) => {
         res.status(500).json();
       });
   }
+});
+
+app.get("/measure-point-location/:mpl", (req,res) => {
+  const MeasurePointLocation = mongoose.model("measurePointLocation");
+  MeasurePointLocation
+    .findById(req.params.mpl)
+    .then((mpl) => {
+      res.json(mpl);
+    })
+    .catch((err) => {
+      res.status(500).json();
+    });
 });
 
 app.listen(process.env.PORT || 3002);
