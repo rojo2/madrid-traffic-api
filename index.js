@@ -1,41 +1,32 @@
 const morgan = require("morgan");
 const helmet = require("helmet");
+const cors = require("cors");
 const express = require("express");
-const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const app = express();
 const log = require("debug")("app:log");
 const error = require("debug")("app:error");
 const pckg = require("./package.json");
-
-const MONGODB = "mongodb://localhost/madrid-trafico";
-
-const MeasurePointSchema = new mongoose.Schema({
-  id: String,
-  description: String,
-  access: String,
-  intensity: Number,
-  occupancy: Number,
-  load: Number,
-  level: Number,
-  intensitySat: Number,
-  error: String,
-  subarea: String,
-  created: Date
+const config = require("./config");
+const mongoose = require("./mongoose")({
+  uri: config.MONGODB
 });
 
-const MeasurePoint = mongoose.model("mps", MeasurePointSchema);
+function asInt(value, defaultValue, maxValue, minValue) {
+  const v = parseInt(value) || defaultValue;
+  if (maxValue != null) {
+    if (v > maxValue) return maxValue;
+  }
+  if (minValue != null) {
+    if (v < minValue) return minValue;
+  }
+  return v;
+}
 
-mongoose.Promise = global.Promise;
-mongoose.connect(MONGODB).then(() => {
-  log(`Conectado a ${MONGODB}`);
-}).catch((err) => {
-  error(`${err}`);
-});
-
-app.use(morgan("combined"));
+app.use(cors());
 app.use(helmet());
+app.use(morgan("combined"));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
@@ -45,16 +36,61 @@ app.get("/", (req, res) => {
 
 // TODO: Esto molaría más si retornase los objetos en función de la
 // posición.
-app.get("/mps", (req, res) => {
+app.get("/measure-point", (req, res) => {
   const offset = parseInt(req.query.offset);
   const limit = parseInt(req.query.limit);
+
+  const MeasurePoint = mongoose.model("measurePoint");
   MeasurePoint
     .find()
-    .skip(offset || 0)
-    .limit(limit || 50)
+    .skip(asInt(offset,0,null,0))
+    .limit(asInt(limit,50,100))
     .then((mps) => {
+      console.log(mps);
       res.json(mps);
+    })
+    .catch((err) => {
+      res.status(500).json();
     });
 });
 
-app.listen(process.env.PORT || 3000);
+app.get("/measure-point/:mp", (req, res) => {
+
+  const MeasurePoint = mongoose.model("measurePoint");
+  MeasurePoint
+    .findById(req.params.mp)
+    .then((mp) => {
+      res.json(mp);
+    });
+
+});
+
+app.get("/measure-point-location", (req,res) => {
+  const MeasurePointLocation = mongoose.model("measurePointLocation");
+  if (req.query.latLng) {
+    const coordinates = req.query.latLng.split(",").map((coord) => parseFloat(coord));
+    MeasurePointLocation
+      .geoNear({ type: "Point", coordinates }, {
+        spherical: true,
+        maxDistance: 1 / 3000,
+        distanceMultiplier: 3000
+      })
+      .then((mps) => {
+        res.json(mps);
+      })
+      .catch((err) => {
+        res.status(500).json();
+      });
+  } else {
+    MeasurePointLocation
+      .find()
+      .then((mps) => {
+        res.json(mps);
+      })
+      .catch((err) => {
+        res.status(500).json();
+      });
+  }
+});
+
+app.listen(process.env.PORT || 3002);

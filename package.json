@@ -1,10 +1,14 @@
 {
-  "name": "api",
+  "name": "madrid-traffic-api",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "start:docker": "DEBUG=* nodemon index.js",
+    "start:watch": "DEBUG=* nodemon index.js",
+    "test": "mocha --recursive",
+    "test:watch": "mocha --recursive --watch"
   },
   "keywords": [],
   "author": "",
@@ -12,9 +16,17 @@
   "dependencies": {
     "body-parser": "^1.15.2",
     "cookie-parser": "^1.4.3",
+    "cors": "^2.8.1",
     "express": "^4.14.0",
+    "graphql": "^0.8.2",
     "helmet": "^3.1.0",
     "mongoose": "^4.7.1",
     "morgan": "^1.7.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "jsdoc": "^3.4.3",
+    "mocha": "^3.2.0",
+    "nodemon": "^1.11.0"
   }
 }
