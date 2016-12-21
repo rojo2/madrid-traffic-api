@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 const MeasurePointLocationSchema = new mongoose.Schema({
-  location: mongoose.Schema.Types.Mixed,
+  location: {
+    type: mongoose.Schema.Types.Mixed,
+    index: "2dsphere"
+  },
   id: String,
   zone: String,
   device: String,

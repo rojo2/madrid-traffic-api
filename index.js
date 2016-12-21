@@ -13,6 +13,17 @@ const mongoose = require("./mongoose")({
   uri: config.MONGODB
 });
 
+function asFloat(value, defaultValue, maxValue, minValue) {
+  const v = parseFloat(value) || defaultValue;
+  if (maxValue != null) {
+    if (v > maxValue) return maxValue;
+  }
+  if (minValue != null) {
+    if (v < minValue) return minValue;
+  }
+  return v;
+}
+
 function asInt(value, defaultValue, maxValue, minValue) {
   const v = parseInt(value) || defaultValue;
   if (maxValue != null) {
@@ -37,14 +48,11 @@ app.get("/", (req, res) => {
 // TODO: Esto molaría más si retornase los objetos en función de la
 // posición.
 app.get("/measure-point", (req, res) => {
-  const offset = parseInt(req.query.offset);
-  const limit = parseInt(req.query.limit);
-
   const MeasurePoint = mongoose.model("measurePoint");
   MeasurePoint
     .find()
-    .skip(asInt(offset,0,null,0))
-    .limit(asInt(limit,50,100))
+    .skip(asInt(req.query.offset,0,null,0))
+    .limit(asInt(req.query.limit,50,100))
     .then((mps) => {
       console.log(mps);
       res.json(mps);
@@ -69,17 +77,20 @@ app.get("/measure-point-location", (req,res) => {
   const MeasurePointLocation = mongoose.model("measurePointLocation");
   if (req.query.latLng) {
     const coordinates = req.query.latLng.split(",").map((coord) => parseFloat(coord));
+    console.log(coordinates);
+    const query = {
+      location: {
+        $near: { $geometry: { type: "Point", coordinates: coordinates }, $maxDistance: asFloat(req.query.maxDistance,100) }
+      }
+    };
+    console.log(query);
     MeasurePointLocation
-      .geoNear({ type: "Point", coordinates }, {
-        spherical: true,
-        maxDistance: 1 / 3000,
-        distanceMultiplier: 3000
-      })
+      .find(query)
       .then((mps) => {
         res.json(mps);
       })
       .catch((err) => {
-        res.status(500).json();
+        res.status(500).json(err);
       });
   } else {
     MeasurePointLocation
