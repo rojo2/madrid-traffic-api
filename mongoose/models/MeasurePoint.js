@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const MeasurePointSchema = new mongoose.Schema({
-  id: String,
+  id: Number,
   created: Date,
   kind: String,
   type: String,

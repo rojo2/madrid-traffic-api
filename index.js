@@ -25,7 +25,7 @@ function asFloat(value, defaultValue, maxValue, minValue) {
 }
 
 function asInt(value, defaultValue, maxValue, minValue) {
-  const v = parseInt(value) || defaultValue;
+  const v = parseInt(value, 10) || defaultValue;
   if (maxValue != null) {
     if (v > maxValue) return maxValue;
   }
@@ -33,6 +33,19 @@ function asInt(value, defaultValue, maxValue, minValue) {
     if (v < minValue) return minValue;
   }
   return v;
+}
+
+function okResponse(res) {
+  return function(data) {
+    res.json(data);
+  };
+}
+
+function errorResponse(res) {
+  return function(err) {
+    error(err);
+    res.status(500).json();
+  };
 }
 
 app.use(cors());
@@ -51,25 +64,20 @@ app.get("/measure-point", (req, res) => {
     .find()
     .skip(asInt(req.query.offset,0,null,0))
     .limit(asInt(req.query.limit,50,100))
-    .then((mps) => {
-      console.log(mps);
-      res.json(mps);
-    })
-    .catch((err) => {
-      res.status(500).json();
-    });
+    .then(okResponse(res))
+    .catch(errorResponse(res));
 });
 
 app.get("/measure-point/:mp", (req, res) => {
   const MeasurePoint = mongoose.model("measurePoint");
+  const id = asInt(req.params.mp);
   MeasurePoint
-    .find({ id: asInt(req.params.mp) })
-    .maxTime(10000)
+    .find({ id })
     .skip(asInt(req.query.offset,0,null,0))
     .limit(asInt(req.query.limit,50,100))
-    .then((mp) => {
-      res.json(mp);
-    });
+    .sort({ created: -1 })
+    .then(okResponse(res))
+    .catch(errorResponse(res));
 });
 
 app.get("/measure-point-location", (req,res) => {
@@ -91,21 +99,13 @@ app.get("/measure-point-location", (req,res) => {
     console.log(query);
     MeasurePointLocation
       .find(query)
-      .then((mps) => {
-        res.json(mps);
-      })
-      .catch((err) => {
-        res.status(500).json(err);
-      });
+      .then(okResponse(res))
+      .catch(errorResponse(res));
   } else {
     MeasurePointLocation
       .find()
-      .then((mps) => {
-        res.json(mps);
-      })
-      .catch((err) => {
-        res.status(500).json();
-      });
+      .then(okResponse(res))
+      .catch(errorResponse(res));
   }
 });
 
@@ -113,12 +113,8 @@ app.get("/measure-point-location/:mpl", (req,res) => {
   const MeasurePointLocation = mongoose.model("measurePointLocation");
   MeasurePointLocation
     .findById(req.params.mpl)
-    .then((mpl) => {
-      res.json(mpl);
-    })
-    .catch((err) => {
-      res.status(500).json();
-    });
+    .then(okResponse(res))
+    .catch(errorResponse(res));
 });
 
 app.listen(process.env.PORT || 3002);

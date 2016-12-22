@@ -4,7 +4,7 @@ const MeasurePointLocationSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     index: "2dsphere"
   },
-  id: String,
+  id: Number,
   zone: String,
   device: String,
   description: String
