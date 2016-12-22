@@ -25,11 +25,19 @@ module.exports = function(opts = {}) {
 
   const options = Object.assign({
     models: true,
-    fixtures: true
+    fixtures: true,
+    options: {
+      server: {
+        socketOptions: {
+          keepAlive: 1,
+          connectTimeoutMS: 10000
+        }
+      }
+    }
   }, opts);
 
   mongoose.Promise = global.Promise;
-  mongoose.connect(options.uri).then(() => {
+  mongoose.connect(options.uri, options.options).then(() => {
 
     if (options.models) {
       requireAll(path.join(__dirname, "models"));
