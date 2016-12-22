@@ -61,14 +61,15 @@ app.get("/measure-point", (req, res) => {
 });
 
 app.get("/measure-point/:mp", (req, res) => {
-
   const MeasurePoint = mongoose.model("measurePoint");
   MeasurePoint
-    .findById(req.params.mp)
+    .find({ id: asInt(req.params.mp) })
+    .maxTime(10000)
+    .skip(asInt(req.query.offset,0,null,0))
+    .limit(asInt(req.query.limit,50,100))
     .then((mp) => {
       res.json(mp);
     });
-
 });
 
 app.get("/measure-point-location", (req,res) => {
