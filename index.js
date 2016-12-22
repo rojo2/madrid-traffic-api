@@ -121,4 +121,4 @@ app.get("/measure-point-location/:mpl", (req,res) => {
     });
 });
 
-app.listen(process.env.PORT || 3002);
+app.listen(process.env.PORT || 3000);
