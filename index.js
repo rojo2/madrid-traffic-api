@@ -48,6 +48,37 @@ function errorResponse(res) {
   };
 }
 
+let cache = {};
+
+function preflight() {
+  log("PreFlight!");
+  const MeasurePointLocation = mongoose.model("measurePointLocation");
+  const MeasurePoint = mongoose.model("measurePoint");
+  MeasurePoint.aggregate([
+    {
+      $group:{
+        _id:"$id",
+        created:{$last:"$created"},
+        load:{$last:"$load"}
+      }
+    },
+    {
+      $lookup:{
+        from:"measurePointLocations",
+        localField:"_id",
+        foreignField:"id",
+        as:"pos"
+      }
+    }
+  ]).then((result) => {
+    cache.measurePointLocations = result;
+  }).catch((err) => {
+    error(err);
+  });
+}
+
+mongoose.connection.on("ready", preflight);
+
 app.use(cors());
 app.use(helmet());
 app.use(morgan("combined"));
@@ -82,6 +113,7 @@ app.get("/measure-point/:mp", (req, res) => {
 
 app.get("/measure-point-location", (req,res) => {
   const MeasurePointLocation = mongoose.model("measurePointLocation");
+  const MeasurePoint = mongoose.model("measurePoint");
   if (req.query.latLng) {
     const coordinates = req.query.latLng.split(",").map((coord) => parseFloat(coord));
     console.log(coordinates);
@@ -102,10 +134,11 @@ app.get("/measure-point-location", (req,res) => {
       .then(okResponse(res))
       .catch(errorResponse(res));
   } else {
-    MeasurePointLocation
-      .find()
-      .then(okResponse(res))
-      .catch(errorResponse(res));
+    if (!cache.measurePointLocations) {
+      res.status(503).json();
+    } else {
+      res.json(cache.measurePointLocations);
+    }
   }
 });
 

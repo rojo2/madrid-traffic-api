@@ -49,6 +49,8 @@ module.exports = function(opts = {}) {
 
     log(`Conectado a ${options.uri}`);
 
+    mongoose.connection.emit("ready");
+
   }).catch((err) => {
 
     error(`${err}`);
