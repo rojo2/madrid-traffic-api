@@ -74,7 +74,7 @@ app.get("/measure-point/:mp", (req, res) => {
   MeasurePoint
     .find({ id })
     .skip(asInt(req.query.offset,0,null,0))
-    .limit(asInt(req.query.limit,50,100))
+    .limit(asInt(req.query.limit,100,200))
     .sort({ created: -1 })
     .then(okResponse(res))
     .catch(errorResponse(res));
