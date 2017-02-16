@@ -30,7 +30,8 @@ module.exports = function(opts = {}) {
       server: {
         socketOptions: {
           keepAlive: 1,
-          connectTimeoutMS: 20000
+          socketTimeoutMS: 40000,
+          connectTimeoutMS: 40000
         }
       }
     }
